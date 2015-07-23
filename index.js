@@ -83,10 +83,10 @@ Option.prototype.is = function(arg) {
 function Command(name) {
   this.commands = [];
   this.options = [];
-  this._execs = {};
+  this._execs = [];
   this._allowUnknownOption = false;
   this._args = [];
-  this._name = name || '';
+  this._name = name;
 }
 
 /**
@@ -165,7 +165,6 @@ Command.prototype.command = function(name, desc, opts) {
     cmd.description(desc);
     this.executables = true;
     this._execs[cmd._name] = true;
-    if (opts.isDefault) this.defaultExecutable = cmd._name;
   }
 
   cmd._noHelp = !!opts.noHelp;
@@ -447,7 +446,7 @@ Command.prototype.parse = function(argv) {
   this._name = this._name || basename(argv[1], '.js');
 
   // github-style sub-commands with no sub-command
-  if (this.executables && argv.length < 3 && !this.defaultExecutable) {
+  if (this.executables && argv.length < 3) {
     // this user needs help
     argv.push('--help');
   }
@@ -461,10 +460,6 @@ Command.prototype.parse = function(argv) {
   // executable sub-commands
   var name = result.args[0];
   if (this._execs[name] && typeof this._execs[name] != "function") {
-    return this.executeSubCommand(argv, args, parsed.unknown);
-  } else if (this.defaultExecutable) {
-    // use the default subcommand
-    args.unshift(name = this.defaultExecutable);
     return this.executeSubCommand(argv, args, parsed.unknown);
   }
 
@@ -947,7 +942,7 @@ Command.prototype.commandHelp = function() {
           ? ' [options]'
           : '')
         + ' ' + args
-    , cmd.description()
+    , cmd._description
     ];
   });
 
@@ -1105,4 +1100,3 @@ function exists(file) {
     return false;
   }
 }
-
